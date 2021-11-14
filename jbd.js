@@ -12,18 +12,34 @@ request0x03[4] = 0xFF;
 request0x03[5] = 0xFD;
 request0x03[6] = 0x77;
 
-function generateRequest(register) {
-
-    console.log(register);
-
-    const result = buffer.alloc(7);
-
+function readRegisterPayload(register) {
+    const result = Buffer.alloc(7);
+    //Start Bit
+    result[0] = 0xDD;
+    //Request type: 0xA5 read, 0x5A write
+    result[1] = 0xA5
+    //Register to use
+    result[2] = register;
+    //Data length, 0 for reads
+    result[3] = 0x00;
+    //Checksum: 0x10000 subtract the sum of register and length, U16, 2bytes.
+    const chk = calcChecksum(register, result[3]);
+    result[4] =chk[0];
+    result[5] =chk[1];
+    //Stop Bit
+    result[6] = 0x77;
     return result;
+}
+
+function calcChecksum(register, length) {
+    const checksum = Buffer.alloc(2)
+    checksum.writeUInt16BE(0x10000-(register+length));
+    return checksum;
 }
 
 
 const port = new SerialPort(args.serialport, {
-    baudRate: 9600,
+    baudRate: args.baudrate,
     databits: 8,
     parity: 'none'
 }, function (err) {
@@ -33,7 +49,7 @@ const port = new SerialPort(args.serialport, {
   });
 
   
-  port.write(request0x03, function(err, res) {
+  port.write(readRegisterPayload(0x03), function(err, res) {
     if (err) {
       return console.log('Error on write: ', err.message)
     }
@@ -44,4 +60,4 @@ const port = new SerialPort(args.serialport, {
   port.on('readable', function () {
     console.log('Data:', port.read())
   })
-  
+
