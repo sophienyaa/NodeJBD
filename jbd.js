@@ -169,11 +169,9 @@ module.exports = {
     getRegister: async function(reg) {
         try {
             logger.trace(`Getting data from Register ${reg}`);
-            const parser = port.pipe(new Delimiter({ delimiter: Buffer.alloc(1, STOP_BYTE) }));
+            const parser = port.pipe(new Delimiter({ delimiter: Buffer.alloc(1, STOP_BYTE), includeDelimiter: true }));
             const rawData = await requestData(port, readRegisterPayload(reg), parser);
             logger.trace(rawData.map(b => {return b.toString(16)}), 'Data Parsed (HEX): ');
-            rawData[rawData.length+1] = STOP_BYTE;
-
             if(validateChecksum(rawData)) {
                 switch(reg) {
                     case 0x03:
