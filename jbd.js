@@ -16,19 +16,19 @@ const port = new SerialPort(args.serialport, {
 const register0x03 = {
     setData: function(rawData) { 
         //pos 4/5 Pack Voltage in 10mv, convert to V
-        this.packV = parseFloat(toU16(rawData[4], rawData[5]) * 0.01).toFixed(2);
+        this.packV = bytesToFloat(rawData[4], rawData[5], 0.01);
         //pos 6/7 - Pack Current, positive for chg, neg for discharge, in 10ma, convert to A
-        this.packA = parseFloat(toS16(rawData[6], rawData[7]) * 0.01).toFixed(2);
+        this.packA = bytesToFloat(rawData[6], rawData[7], 0.01, true);
         //pos 8/9 - Pack Balance Capacity, in 10mah convert to Ah
-        this.packBalCap = parseFloat(toU16(rawData[8], rawData[9]) * 0.01).toFixed(2);
+        this.packBalCap = bytesToFloat(rawData[8], rawData[9], 0.01);
         //pos 10/11 - Pack Rate Capacity, in 10mah, convert to Ah
-        this.packRateCap = parseFloat(toU16(rawData[10], rawData[11]) * 0.01).toFixed(2);
+        this.packRateCap = bytesToFloat(rawData[10], rawData[11], 0.01);
         //pos 12/13 - Pack number of cycles
-        this.packCycles = parseInt(toU16(rawData[12], rawData[13]));
+        this.packCycles = toU16(rawData[12], rawData[13]);
         //pos 14/15 bms production date
             //TODO
         //pos 25 battery series number - do this before balance status so we can use it to return the correct size array
-        this.packNumberOfCells = parseInt(process1Byte(rawData[25]));
+        this.packNumberOfCells = toU8(rawData[25]);
         //pos 16/17 balance status
         this.balanceStatus = getBalanceStatus(rawData[16], rawData[17], this.packNumberOfCells);
         //pos 18/19 balance status high
@@ -38,11 +38,11 @@ const register0x03 = {
         //pos 22 s/w version
         this.bmsSWVersion = rawData[22];
         //pos 23 RSOC (remaining pack capacity, percent)
-        this.packSOC = parseInt(process1Byte(rawData[23]));
+        this.packSOC = toU8(rawData[23]);
         //pos 24 FET status, bit0 chg, bit1, dischg (0 FET off, 1 FET on)
             //TODO
         //pos 26 number of temp sensors (NTCs)
-        this.tempSensorCount = parseInt(process1Byte(rawData[26]));
+        this.tempSensorCount = toU8(rawData[26]);
         //pos 27 / 28 / 29 Temp sensor (NTC) values
             //TODO
         return this;
@@ -57,8 +57,8 @@ const register0x04 = {
             if(i == 0 || i % 2 == 0) {
                 const cellmV = `cell${count}mV`;
                 const cellV = `cell${count}V`;
-                this[cellmV] =  parseInt(toU16(cellData[i], cellData[i+1]));
-                this[cellV] =  parseFloat(toU16(cellData[i], cellData[i+1]) * 0.001).toFixed(2);
+                this[cellmV] = toU16(cellData[i], cellData[i+1]);
+                this[cellV] = bytesToFloat(cellData[i], cellData[i+1], 0.001);
                 count++;
             }
         }
@@ -85,6 +85,7 @@ function readRegisterPayload(register) {
     return result;
 }
 
+//calculates the checksum for a request/result
 function calcChecksum(sumOfData, length) {
     const checksum = Buffer.alloc(2)
     //Checksum is 0x10000 (65536 dec) minus the sum of the data plus its length, returned as a 2 byte array
@@ -92,6 +93,7 @@ function calcChecksum(sumOfData, length) {
     return checksum;
 }
 
+//validates the checksum of an incoming result
 function validateChecksum(result) {
     //Payload is between the 4th and n-3th byte (last 3 bytes are checksum and stop byte)
     const sumOfPayload = result.slice(4, result.length-3).reduce((partial_sum, a) => partial_sum + a, 0);
@@ -99,20 +101,32 @@ function validateChecksum(result) {
     return checksum[0] === result[result.length-3] && checksum[1] === result[result.length-2];
 }
 
+//returns a float to two decimal points for a signed/unsigned int and a multiplier
+function bytesToFloat(byte1, byte2, multiplier, signed) {
+    multiplier = multiplier === undefined || multiplier === null ? 1 : multiplier;
+    if(signed) {
+        return parseFloat(toS16(byte1, byte2) * multiplier).toFixed(2);
+    }
+    return parseFloat(toU16(byte1, byte2) * multiplier).toFixed(2);
+}
+
+//takes two bytes and returns 16bit signed int (-32768 to +32767)
 function toS16(byte1, byte2) {
     return Buffer.from([byte1, byte2]).readInt16BE();
 }
 
+//takes two bytes and returns 16 bit unsigned int (0 to 65535)
 function toU16(byte1, byte2) {
     return Buffer.from([byte1, byte2]).readUInt16BE();
 }
 
-function process1Byte(byte) {
-    return parseInt(byte.toString(16), 16).toFixed(2);
+//takes one byte and returns 8 bit int (0 to 255)
+function toU8(byte) {
+    return Buffer.from([byte]).readInt8();
 }
 
 function process2BytesToBin(byte1, byte2) {
-    return (parseInt(`${byte1.toString(16)}${byte2.toString(16)}`, 16).toString(2)).padStart(16, '0');
+    return toU16(byte1, byte2).toString(2).padStart(16, '0');
 }
 
 function getBalanceStatus(byte1, byte2, numCells) {
