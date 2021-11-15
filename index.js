@@ -19,7 +19,7 @@ async function main() {
 
           if(args.mqttbroker) {
               await mqtt.publish(register3, 'pack');
-              //await mqtt.publish(register4, 'cells');
+              await mqtt.publish(register4, 'cells');
           }
           else {
               logger.trace('No MQTT broker specified!');

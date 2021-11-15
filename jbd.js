@@ -49,13 +49,36 @@ const register0x03 = {
     }
 };
 
+const example04 = Buffer.alloc(15);
+example04[0] = 0xdd //-start
+example04[1] = 0x04 //-reg
+example04[2] = 0x00 //-err
+example04[3] = 0x08 //-len
+example04[4] = 0x0d //-cell0
+example04[5] = 0x08 //-cell0
+example04[6] = 0x0d //-cell1
+example04[7] = 0x08 //-cell1
+example04[8] = 0x0d //-cell2
+example04[9] = 0x07 //-cell2
+example04[10] = 0x0d //-cell3
+example04[11] = 0x08 //-cell3
+example04[12] = 0xff //-chk
+example04[13] = 0xa5 //-chk
+example04[14] = 0x77 //-stop
+
 const register0x04 = {
     setData: function(rawData) {
-        this.cell1 = 0;
-        console.log(rawData);
-
-        const cellData = rawData.slice(3,rawData.length-3);
-        console.log(cellData);
+        const cellData = rawData.slice(4,rawData.length-3);
+        let count = 0;
+        for(var i = 0; i < rawData[3]; i++) { 
+            if(i == 0 || i % 2 == 0) {
+                const cellmV = `cell${count}mV`;
+                const cellV = `cell${count}V`;
+                this[cellmV] =  parseInt(process2Byte(cellData[i], cellData[i+1]));
+                this[cellV] =  parseFloat(process2Byte(cellData[i], cellData[i+1], 0.001));
+                count++;
+            }
+        }
         return this;
     }
 };
@@ -94,8 +117,8 @@ function validateChecksum(result) {
 }
 
 function process2Byte(byte1, byte2, multiplier) {
-    multiplier = multiplier != undefined || multiplier != null ? multiplier : 0;
-    return (parseInt(`${byte1.toString(16)}${byte2.toString(16)}`, 16) * multiplier).toFixed(2);
+    multiplier = multiplier != undefined || multiplier != null ? multiplier : 1;
+    return (parseInt(`${byte1.toString(16).padStart(2,'0')}${byte2.toString(16).padStart(2,'0')}`, 16) * multiplier).toFixed(2);
 }
 
 function process1Byte(byte) {
@@ -190,5 +213,8 @@ module.exports = {
         catch(e) {
             logger.error(e);
         }
+    },
+    getr4 :async function() {
+        return register0x04.setData(example04);
     }
 };
