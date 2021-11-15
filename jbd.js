@@ -182,7 +182,7 @@ module.exports = {
                     case 0x03:
                         return register0x03.setData(rawData);
                     case 0x04:
-                        return register0x03.setData(rawData);
+                        return register0x04.setData(rawData);
                   }
             }
             throw 'Recieved invalid payload from BMS!';
