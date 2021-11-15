@@ -207,7 +207,7 @@ module.exports = {
 
     getRegister3: async function() {
         try {
-            const parser = port.pipe(new Delimiter({ delimiter: Buffer.alloc(5, STOP_BYTE) }));
+            const parser = port.pipe(new Delimiter({ delimiter: Buffer.alloc(1, STOP_BYTE) }));
             const rawData = await requestData(port, readRegisterPayload(0x03), parser);
             return register0x03.setData(rawData);
         }
@@ -229,7 +229,7 @@ async function requestData(serialPort, buff, parser){
         }
         logger.trace(buff, 'Data written: ');
         parser.on('data', (data) => { 
-            console.log(data)
+            console.log('parser data: ' + data)
             resolve(data)
         })
       })
@@ -237,7 +237,7 @@ async function requestData(serialPort, buff, parser){
 }
 
 port.on('readable', function () {
-    console.log('Data:', port.read())
+    console.log('RAW Data:', port.read())
   })
 
 
