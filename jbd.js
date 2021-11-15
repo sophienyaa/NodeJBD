@@ -51,14 +51,12 @@ const register0x03 = {
 
 const register0x04 = {
     setData: function(rawData) {
-
-        const cellData = rawData.splice(3,rawData.length-3);
+        this.cell1 = 0;
+        const cellData = rawData.slice(3,rawData.length-3);
         console.log(cellData);
-
-
+        return this;
     }
-    //TODO: this.
-}
+};
 
 function readRegisterPayload(register) {
     const result = Buffer.alloc(7);
