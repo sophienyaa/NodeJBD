@@ -23,7 +23,8 @@ async function main() {
           }
           else {
               logger.trace('No MQTT broker specified!');
-              console.log(result);
+              console.log(register3);
+              console.log(register4);
           }
       }, 
       args.pollinginterval * 1000
