@@ -52,6 +52,8 @@ const register0x03 = {
 const register0x04 = {
     setData: function(rawData) {
         this.cell1 = 0;
+        console.log(rawData);
+
         const cellData = rawData.slice(3,rawData.length-3);
         console.log(cellData);
         return this;
