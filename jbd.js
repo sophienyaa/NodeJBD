@@ -209,6 +209,7 @@ module.exports = {
         try {
             const parser = port.pipe(new Delimiter({ delimiter: Buffer.alloc(1, STOP_BYTE) }));
             const rawData = await requestData(port, readRegisterPayload(0x03), parser);
+            console.log('parsed' + rawData);
             return register0x03.setData(rawData);
         }
         catch(e) {
@@ -229,17 +230,11 @@ async function requestData(serialPort, buff, parser){
         }
         logger.trace(buff, 'Data written: ');
         parser.on('data', (data) => { 
-            console.log('parser data: ' + data)
             resolve(data)
         })
       })
     });      
 }
-
-port.on('readable', function () {
-    console.log('RAW Data:', port.read())
-  })
-
 
 /*
 
