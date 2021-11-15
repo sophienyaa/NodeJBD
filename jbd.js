@@ -1,24 +1,30 @@
 const SerialPort = require('serialport');
+const Delimiter = require('@serialport/parser-delimiter')
 const logger = require('./logger');
 const cli = require('./cli');
 const args = cli.args;
 
+const START_BYTE = 0xDD;
+const STOP_BYTE = 0x77;
+const READ_BYTE = 0xA5;
+const READ_LENGTH = 0x00;
+
 function readRegisterPayload(register) {
     const result = Buffer.alloc(7);
     //Start Byte
-    result[0] = 0xDD;
+    result[0] = START_BYTE;
     //Request type: 0xA5 read, 0x5A write
-    result[1] = 0xA5
+    result[1] = READ_BYTE;
     //Register to use
     result[2] = register;
     //Data length, 0 for reads
-    result[3] = 0x00;
+    result[3] = READ_LENGTH;
     //Checksum: 0x10000 subtract the sum of register and length, U16, 2bytes.
     const chk = calcChecksum(register, result[3]);
     result[4] =chk[0];
     result[5] =chk[1];
     //Stop Byte
-    result[6] = 0x77;
+    result[6] = STOP_BYTE;
     return result;
 }
 
@@ -198,22 +204,34 @@ const port = new SerialPort(args.serialport, {
 });
 
 module.exports = { 
+
     getRegister3: async function() {
-        await writeAsync(port, readRegisterPayload(0x03));
-        return register0x03.setData(example0x03);
+        try {
+            const parser = port.pipe(new Delimiter({ delimiter: Buffer.alloc(5, STOP_BYTE) }));
+            const rawData = await requestData(port, readRegisterPayload(0x03), parser);
+            return register0x03.setData(rawData);
+        }
+        catch(e) {
+            logger.error(e);
+        }
     }
 };
 
 
-async function writeAsync(serialPort, buff){
+async function requestData(serialPort, buff, parser){
+    
+    logger.trace('Writing to serial port...');
+    
     return new Promise(function(resolve, reject) { 
         serialPort.write(buff, function (err) {
         if(err) {
-            console.log('Error on write: ', err.message)
             reject(err);
         }
-        console.log('message written')
-        resolve()
+        logger.trace(buff, 'Data written: ');
+        parser.on('data', (data) => { 
+            console.log(data)
+            resolve(data)
+        })
       })
     });      
 }
