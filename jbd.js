@@ -16,15 +16,15 @@ const port = new SerialPort(args.serialport, {
 const register0x03 = {
     setData: function(rawData) { 
         //pos 4/5 Pack Voltage in 10mv, convert to V
-        this.packV = parseFloat(toU16(rawData[4], rawData[5]) * 0.01);
+        this.packV = parseFloat(toU16(rawData[4], rawData[5]) * 0.01).toFixed(2);
         //pos 6/7 - Pack Current, positive for chg, neg for discharge, in 10ma, convert to A
-        this.packA = parseFloat(toS16(rawData[6], rawData[7]) * 0.01)
+        this.packA = parseFloat(toS16(rawData[6], rawData[7]) * 0.01).toFixed(2);
         //pos 8/9 - Pack Balance Capacity, in 10mah convert to Ah
-        this.packBalCap = parseFloat(toU16(rawData[8], rawData[9]) * 0.01);
+        this.packBalCap = parseFloat(toU16(rawData[8], rawData[9]) * 0.01).toFixed(2);
         //pos 10/11 - Pack Rate Capacity, in 10mah, convert to Ah
-        this.packRateCap = parseFloat(toU16(rawData[10], rawData[11]) * 0.01);
+        this.packRateCap = parseFloat(toU16(rawData[10], rawData[11]) * 0.01).toFixed(2);
         //pos 12/13 - Pack number of cycles
-        this.packCycles = parseInt(toU16(rawData[10], rawData[11]));
+        this.packCycles = parseInt(toU16(rawData[12], rawData[13]));
         //pos 14/15 bms production date
             //TODO
         //pos 25 battery series number - do this before balance status so we can use it to return the correct size array
@@ -58,7 +58,7 @@ const register0x04 = {
                 const cellmV = `cell${count}mV`;
                 const cellV = `cell${count}V`;
                 this[cellmV] =  parseInt(toU16(cellData[i], cellData[i+1]));
-                this[cellV] =  parseFloat(toU16(cellData[i], cellData[i+1]) * 0.001);
+                this[cellV] =  parseFloat(toU16(cellData[i], cellData[i+1]) * 0.001).toFixed(2);
                 count++;
             }
         }
