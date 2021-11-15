@@ -15,16 +15,16 @@ const port = new SerialPort(args.serialport, {
 
 const register0x03 = {
     setData: function(rawData) { 
-        //pos 4/5 Pack Voltage 
-        this.packV = parseFloat(process2Byte(rawData[4], rawData[5], 0.01));
-        //pos 6/7 - Pack Current, positive for chg, neg for discharge
-        this.packA = toS16(rawData[6], rawData[7]);//parseFloat(process2Byte(rawData[6], rawData[7], 0.01));
-        //pos 8/9 - Pack Balance Capacity
-        this.packBalCap = parseFloat(process2Byte(rawData[8], rawData[9], 0.01));
-        //pos 10/11 - Pack Rate Capacity
-        this.packRateCap = parseFloat(process2Byte(rawData[10], rawData[11], 0.01));
+        //pos 4/5 Pack Voltage in 10mv, convert to V
+        this.packV = parseFloat(toU16(rawData[4], rawData[5]) * 0.01);
+        //pos 6/7 - Pack Current, positive for chg, neg for discharge, in 10ma, convert to A
+        this.packA = parseFloat(toS16(rawData[6], rawData[7]) * 0.01)
+        //pos 8/9 - Pack Balance Capacity, in 10mah convert to Ah
+        this.packBalCap = parseFloat(toU16(rawData[8], rawData[9]) * 0.01);
+        //pos 10/11 - Pack Rate Capacity, in 10mah, convert to Ah
+        this.packRateCap = parseFloat(toU16(rawData[10], rawData[11]) * 0.01);
         //pos 12/13 - Pack number of cycles
-        this.packCycles = parseInt(process2Byte(rawData[12], rawData[13]));
+        this.packCycles = parseInt(toU16(rawData[10], rawData[11]));
         //pos 14/15 bms production date
             //TODO
         //pos 25 battery series number - do this before balance status so we can use it to return the correct size array
@@ -57,8 +57,8 @@ const register0x04 = {
             if(i == 0 || i % 2 == 0) {
                 const cellmV = `cell${count}mV`;
                 const cellV = `cell${count}V`;
-                this[cellmV] =  parseInt(process2Byte(cellData[i], cellData[i+1]));
-                this[cellV] =  parseFloat(process2Byte(cellData[i], cellData[i+1], 0.001));
+                this[cellmV] =  parseInt(toU16(cellData[i], cellData[i+1]));
+                this[cellV] =  parseFloat(toU16(cellData[i], cellData[i+1]) * 0.001);
                 count++;
             }
         }
@@ -100,13 +100,11 @@ function validateChecksum(result) {
 }
 
 function toS16(byte1, byte2) {
-    Buffer.from([byte1, byte2]).readInt16BE();
+    return Buffer.from([byte1, byte2]).readInt16BE();
 }
 
-
-function process2Byte(byte1, byte2, multiplier) {
-    multiplier = multiplier != undefined || multiplier != null ? multiplier : 1;
-    return (parseInt(`${byte1.toString(16).padStart(2,'0')}${byte2.toString(16).padStart(2,'0')}`, 16) * multiplier).toFixed(2);
+function toU16(byte1, byte2) {
+    return Buffer.from([byte1, byte2]).readUInt16BE();
 }
 
 function process1Byte(byte) {
@@ -117,7 +115,7 @@ function process2BytesToBin(byte1, byte2) {
     return (parseInt(`${byte1.toString(16)}${byte2.toString(16)}`, 16).toString(2)).padStart(16, '0');
 }
 
-function getBalanceStatus(byte1,byte2, numCells) {
+function getBalanceStatus(byte1, byte2, numCells) {
     const balanceBits = process2BytesToBin(byte1, byte2).split("").slice(0, numCells);
     return balanceBits.map((bit, idx) =>{
         const keyName = `cell${idx}`;
@@ -201,8 +199,5 @@ module.exports = {
         catch(e) {
             logger.error(e);
         }
-    },
-    getr4 :async function() {
-        return register0x04.setData(example04);
     }
 };
