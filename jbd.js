@@ -14,7 +14,7 @@ function readRegisterPayload(register) {
     //Data length, 0 for reads
     result[3] = 0x00;
     //Checksum: 0x10000 subtract the sum of register and length, U16, 2bytes.
-    const chk = calcReadPayloadChecksum(register, result[3]);
+    const chk = calcChecksum(register, result[3]);
     result[4] =chk[0];
     result[5] =chk[1];
     //Stop Byte
@@ -35,6 +35,67 @@ function validateChecksum(result) {
     const checksum = calcChecksum(sumOfPayload, result[3]);
     return checksum[0] === result[result.length-3] && checksum[1] === result[result.length-2];
 }
+
+function process2Byte(byte1, byte2, multiplier) {
+    multiplier = multiplier != undefined || multiplier != null ? multiplier : 0;
+    return (parseInt(`${byte1.toString(16)}${byte2.toString(16)}`, 16) * multiplier).toFixed(2);
+}
+
+function process1Byte(byte) {
+    return parseInt(byte.toString(16), 16).toFixed(2);
+}
+
+function process2BytesToBin(byte1, byte2) {
+    return (parseInt(`${byte1.toString(16)}${byte2.toString(16)}`, 16).toString(2)).padStart(16, '0');
+}
+
+function getBalanceStatus(byte1,byte2, numCells) {
+    const balanceBits = process2BytesToBin(byte1, byte2).split("").slice(0, numCells);
+    return balanceBits.map((bit, idx) =>{
+        const keyName = `cell${idx}`;
+        return {[keyName]: Boolean(parseInt(bit))};
+    });
+}
+
+function getProtectionStatus(byte1, byte2) {
+    const protectionBits = process2BytesToBin(byte1, byte2).split("").map(pb => {
+        pb = Boolean(parseInt(pb));
+        return pb;
+    });
+
+    //Bit definitions
+    const protectionStatus = {    
+        //bit0 - Single Cell overvolt
+        singleCellOvervolt: protectionBits[0],
+        //bit1 - Single Cell undervolt
+        singleCellUndervolt:protectionBits[1],
+        //bit2 - whole pack overvolt
+        packOvervolt:protectionBits[2],
+        //bit3 - whole pack undervolt
+        packUndervolt:protectionBits[3],
+        //bit4 - charging over temp
+        chargeOvertemp:protectionBits[4],
+        //bit5 - charging under temp
+        chargeUndertemp:protectionBits[5],
+        //bit6 - discharge over temp
+        dischargeOvertemp:protectionBits[6],
+        //bit7 - discharge under temp
+        dischargeUndertemp:protectionBits[7],
+        //bit8 - charge overcurrent
+        chargeOvercurrent:protectionBits[8],
+        //bit9 - discharge overcurrent   
+        dischargeOvercurrent:protectionBits[9],
+        //bit10 - short circut
+        shortCircut:protectionBits[10],
+        //bit11 - front-end detection ic error
+        frontEndDetectionICError:protectionBits[11],
+        //bit12 - software lock MOS
+        softwareLockMOS:protectionBits[12]
+        //bit13-15 reserved/unused
+    }
+    return protectionStatus;
+}
+
 
 const example0x03 = Buffer.alloc(36);
 //start byte
@@ -132,74 +193,34 @@ const register0x03 = {
     }
 };
 
-//returns a decimal number to two places for a pair of bytes
-function process2Byte(byte1, byte2, multiplier) {
-    multiplier = multiplier != undefined || multiplier != null ? multiplier : 0;
-    return (parseInt(`${byte1.toString(16)}${byte2.toString(16)}`, 16) * multiplier).toFixed(2);
-}
-
-function process1Byte(byte) {
-    return parseInt(byte.toString(16), 16).toFixed(2);
-}
-
-function process2BytesToBin(byte1, byte2) {
-    return (parseInt(`${byte1.toString(16)}${byte2.toString(16)}`, 16).toString(2)).padStart(16, '0');
-}
-
-function getBalanceStatus(byte1,byte2, numCells) {
-    const balanceBits = process2BytesToBin(byte1, byte2).split("").slice(0, numCells);
-    return balanceBits.map((bit, idx) =>{
-        const keyName = `cell${idx}`;
-        return {[keyName]: Boolean(parseInt(bit))};
-    });
-}
-
-function getProtectionStatus(byte1, byte2) {
-    const protectionBits = process2BytesToBin(byte1, byte2).split("").map(pb => {
-        pb = Boolean(parseInt(pb));
-        return pb;
-    });
-
-    //Bit definitions
-    const protectionStatus = {    
-        //bit0 - Single Cell overvolt
-        singleCellOvervolt: protectionBits[0],
-        //bit1 - Single Cell undervolt
-        singleCellUndervolt:protectionBits[1],
-        //bit2 - whole pack overvolt
-        packOvervolt:protectionBits[2],
-        //bit3 - whole pack undervolt
-        packUndervolt:protectionBits[3],
-        //bit4 - charging over temp
-        chargeOvertemp:protectionBits[4],
-        //bit5 - charging under temp
-        chargeUndertemp:protectionBits[5],
-        //bit6 - discharge over temp
-        dischargeOvertemp:protectionBits[6],
-        //bit7 - discharge under temp
-        dischargeUndertemp:protectionBits[7],
-        //bit8 - charge overcurrent
-        chargeOvercurrent:protectionBits[8],
-        //bit9 - discharge overcurrent   
-        dischargeOvercurrent:protectionBits[9],
-        //bit10 - short circut
-        shortCircut:protectionBits[10],
-        //bit11 - front-end detection ic error
-        frontEndDetectionICError:protectionBits[11],
-        //bit12 - software lock MOS
-        softwareLockMOS:protectionBits[12]
-        //bit13-15 reserved/unused
-    }
-    return protectionStatus;
-}
+const port = new SerialPort(args.serialport, {
+    baudRate: args.baudrate
+});
 
 module.exports = { 
     getRegister3: async function() {
+        await writeAsync(port, readRegisterPayload(0x03));
         return register0x03.setData(example0x03);
     }
 };
 
 
+async function writeAsync(serialPort, buff){
+    return new Promise(function(resolve, reject) { 
+        serialPort.write(buff, function (err) {
+        if(err) {
+            console.log('Error on write: ', err.message)
+            reject(err);
+        }
+        console.log('message written')
+        resolve()
+      })
+    });      
+}
+
+port.on('readable', function () {
+    console.log('Data:', port.read())
+  })
 
 
 /*
