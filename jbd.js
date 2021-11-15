@@ -16,18 +16,18 @@ const port = new SerialPort(args.serialport, {
 const register0x03 = {
     setData: function(rawData) { 
         //pos 4/5 Pack Voltage 
-        this.packV = process2Byte(rawData[4], rawData[5], 0.01);
+        this.packV = parseFloat(process2Byte(rawData[4], rawData[5], 0.01));
         //pos 6/7 - Pack Current, positive for chg, neg for discharge
-        this.packA = process2Byte(rawData[6], rawData[7], 0.01);
+        this.packA = parseFloat(process2Byte(rawData[6], rawData[7], 0.01));
         //pos 8/9 - Pack Balance Capacity
-        this.packBalCap = process2Byte(rawData[8], rawData[9], 0.01);
+        this.packBalCap = parseFloat(process2Byte(rawData[8], rawData[9], 0.01));
         //pos 10/11 - Pack Rate Capacity
-        this.packRateCap = process2Byte(rawData[10], rawData[11], 0.01);
+        this.packRateCap = parseFloat(process2Byte(rawData[10], rawData[11], 0.01));
         //pos 12/13 - Pack number of cycles
-        this.packCycles = process2Byte(rawData[12], rawData[13]);
-        //TODO: pos 14/15 bms production date
-        
-        //pos 25 battery series number - do this before balance status so we can use it
+        this.packCycles = parseInt(process2Byte(rawData[12], rawData[13]));
+        //pos 14/15 bms production date
+            //TODO
+        //pos 25 battery series number - do this before balance status so we can use it to return the correct size array
         this.packNumberOfCells = parseInt(process1Byte(rawData[25]));
         //pos 16/17 balance status
         this.balanceStatus = getBalanceStatus(rawData[16], rawData[17], this.packNumberOfCells);
@@ -38,13 +38,13 @@ const register0x03 = {
         //pos 22 s/w version
         this.bmsSWVersion = rawData[22];
         //pos 23 RSOC (remaining pack capacity, percent)
-        this.packSOC = process1Byte(rawData[23]);
-        //TODO: pos 24 FET status, bit0 chg, bit1, dischg (0 FET off, 1 FET on)
-
+        this.packSOC = parseInt(process1Byte(rawData[23]));
+        //pos 24 FET status, bit0 chg, bit1, dischg (0 FET off, 1 FET on)
+            //TODO
         //pos 26 number of temp sensors (NTCs)
         this.tempSensorCount = parseInt(process1Byte(rawData[26]));
-        //TODO: pos 27 / 28 / 29 Temp sensor (NTC) values
-        
+        //pos 27 / 28 / 29 Temp sensor (NTC) values
+            //TODO
         return this;
     }
 };
@@ -157,7 +157,6 @@ async function requestData(serialPort, buff, parser){
         }
         logger.trace(buff.map(b => {return b.toString(16)}), 'Data written (HEX): ');
         parser.on('data', (data) => { 
-            logger.trace(data.map(b => {return b.toString(16)}), 'Data Recieved (HEX): ');
             resolve(data)
         })
       })
@@ -165,13 +164,12 @@ async function requestData(serialPort, buff, parser){
 }
 
 module.exports = { 
-
     getRegister: async function(reg) {
         try {
             logger.trace(`Getting data from Register ${reg}`);
             const parser = port.pipe(new Delimiter({ delimiter: Buffer.alloc(1, STOP_BYTE), includeDelimiter: true }));
             const rawData = await requestData(port, readRegisterPayload(reg), parser);
-            logger.trace(rawData.map(b => {return b.toString(16)}), 'Data Parsed (HEX): ');
+            logger.trace(rawData.map(b => {return b.toString(16)}), 'Data read (HEX): ');
             if(validateChecksum(rawData)) {
                 switch(reg) {
                     case 0x03:
