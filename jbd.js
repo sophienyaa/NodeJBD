@@ -49,23 +49,6 @@ const register0x03 = {
     }
 };
 
-const example04 = Buffer.alloc(15);
-example04[0] = 0xdd //-start
-example04[1] = 0x04 //-reg
-example04[2] = 0x00 //-err
-example04[3] = 0x08 //-len
-example04[4] = 0x0d //-cell0
-example04[5] = 0x08 //-cell0
-example04[6] = 0x0d //-cell1
-example04[7] = 0x08 //-cell1
-example04[8] = 0x0d //-cell2
-example04[9] = 0x07 //-cell2
-example04[10] = 0x0d //-cell3
-example04[11] = 0x08 //-cell3
-example04[12] = 0xff //-chk
-example04[13] = 0xa5 //-chk
-example04[14] = 0x77 //-stop
-
 const register0x04 = {
     setData: function(rawData) {
         const cellData = rawData.slice(4,rawData.length-3);

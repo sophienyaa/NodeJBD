@@ -3,7 +3,7 @@ const yargs = require('yargs');
 const argv = yargs
     .option('serialport', {
         alias: 's',
-        description: 'Serial port your controller is connected to (e.g -s /dev/ttyUSB0)',
+        description: 'Serial port your BMS is connected to (e.g -s /dev/ttyUSB0)',
         type: 'string',
     })
     .option('baudrate', {
