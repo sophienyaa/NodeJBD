@@ -157,6 +157,7 @@ async function requestData(serialPort, buff, parser){
         }
         logger.trace(buff.map(b => {return b.toString(16)}), 'Data written (HEX): ');
         parser.on('data', (data) => { 
+            logger.trace(data.map(b => {return b.toString(16)}), 'Data Recieved (HEX): ');
             resolve(data)
         })
       })
@@ -167,8 +168,11 @@ module.exports = {
 
     getRegister: async function(reg) {
         try {
+            logger.trace(`Getting data from Register ${reg}`);
             const parser = port.pipe(new Delimiter({ delimiter: Buffer.alloc(1, STOP_BYTE) }));
             const rawData = await requestData(port, readRegisterPayload(reg), parser);
+            logger.trace(rawData.map(b => {return b.toString(16)}), 'Data Parsed (HEX): ');
+
             if(validateChecksum(rawData)) {
                 switch(reg) {
                     case 0x03:
