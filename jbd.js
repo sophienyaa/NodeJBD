@@ -50,6 +50,13 @@ const register0x03 = {
 };
 
 const register0x04 = {
+    setData: function(rawData) {
+
+        const cellData = rawData.splice(3,rawData.length-3);
+        console.log(cellData);
+
+
+    }
     //TODO: this.
 }
 

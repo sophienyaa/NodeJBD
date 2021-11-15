@@ -15,7 +15,7 @@ async function main() {
     setInterval(
       async function() {
           const register3 = await jbd.getRegister(0x03);
-          //const register4 = await jbd.getRegister(0x04);
+          const register4 = await jbd.getRegister(0x04);
 
           if(args.mqttbroker) {
               await mqtt.publish(register3, 'pack');
