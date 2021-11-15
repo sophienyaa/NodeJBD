@@ -9,6 +9,50 @@ const STOP_BYTE = 0x77;
 const READ_BYTE = 0xA5;
 const READ_LENGTH = 0x00;
 
+const port = new SerialPort(args.serialport, {
+    baudRate: args.baudrate
+});
+
+const register0x03 = {
+    setData: function(rawData) { 
+        //pos 4/5 Pack Voltage 
+        this.packV = process2Byte(rawData[4], rawData[5], 0.01);
+        //pos 6/7 - Pack Current, positive for chg, neg for discharge
+        this.packA = process2Byte(rawData[6], rawData[7], 0.01);
+        //pos 8/9 - Pack Balance Capacity
+        this.packBalCap = process2Byte(rawData[8], rawData[9], 0.01);
+        //pos 10/11 - Pack Rate Capacity
+        this.packRateCap = process2Byte(rawData[10], rawData[11], 0.01);
+        //pos 12/13 - Pack number of cycles
+        this.packCycles = process2Byte(rawData[12], rawData[13]);
+        //TODO: pos 14/15 bms production date
+        
+        //pos 25 battery series number - do this before balance status so we can use it
+        this.packNumberOfCells = parseInt(process1Byte(rawData[25]));
+        //pos 16/17 balance status
+        this.balanceStatus = getBalanceStatus(rawData[16], rawData[17], this.packNumberOfCells);
+        //pos 18/19 balance status high
+        this.balanceStatusHigh = getBalanceStatus(rawData[18], rawData[19], this.packNumberOfCells);
+        //pos 20/21 protection status
+        this.protectionStatus = getProtectionStatus(rawData[20],rawData[21]);
+        //pos 22 s/w version
+        this.bmsSWVersion = rawData[22];
+        //pos 23 RSOC (remaining pack capacity, percent)
+        this.packSOC = process1Byte(rawData[23]);
+        //TODO: pos 24 FET status, bit0 chg, bit1, dischg (0 FET off, 1 FET on)
+
+        //pos 26 number of temp sensors (NTCs)
+        this.tempSensorCount = parseInt(process1Byte(rawData[26]));
+        //TODO: pos 27 / 28 / 29 Temp sensor (NTC) values
+        
+        return this;
+    }
+};
+
+const register0x04 = {
+    //TODO: this.
+}
+
 function readRegisterPayload(register) {
     const result = Buffer.alloc(7);
     //Start Byte
@@ -102,123 +146,6 @@ function getProtectionStatus(byte1, byte2) {
     return protectionStatus;
 }
 
-
-const example0x03 = Buffer.alloc(36);
-//start byte
-example0x03[0] = 0xDD
-//request made
-example0x03[1] = 0x03 
-//status 0 = OK
-example0x03[2] = 0x00 
-//length
-example0x03[3] = 0x1D //=29 bytes
-//DATA
-//packv
-example0x03[4] = 0x05 //1
-example0x03[5] = 0x45 //2
-
-//pack ma
-example0x03[6] = 0x01 //3
-example0x03[7] = 0x79 //4
-
-
-example0x03[8] = 0x26 //5
-example0x03[9] = 0x6b //6
-
-example0x03[10] = 0x27 //7
-example0x03[11] = 0x10 //8
-
-example0x03[12] = 0x00 //9
-example0x03[13] = 0x00 //10
-
-example0x03[14] = 0x2b //11
-example0x03[15] = 0x1c //12
-
-example0x03[16] = 0x00 //13
-example0x03[17] = 0x00 //14
-
-example0x03[18] = 0x00 //15
-example0x03[19] = 0x00 //16
-
-example0x03[20] = 0x00 //17
-example0x03[21] = 0x00 //18
-
-example0x03[22] = 0x20 //19
-
-example0x03[23] = 0x62 //20
-
-example0x03[24] = 0x03 //21
-
-example0x03[25] = 0x04 //22
-example0x03[26] = 0x03 //23
-example0x03[27] = 0x0b //24
-example0x03[28] = 0x1d //25
-example0x03[29] = 0x0b //26
-example0x03[30] = 0x1e //27
-example0x03[31] = 0x0b //28
-example0x03[32] = 0x18 //29
-//Checksum = 64784 ... 752
-example0x03[33] = 0xfd 
-example0x03[34] = 0x10
-//Stop Byte
-example0x03[35] = 0x77
-
-const register0x03 = {
-    setData: function(rawData) { 
-        //pos 4/5 Pack Voltage 
-        this.packV = process2Byte(rawData[4], rawData[5], 0.01);
-        //pos 6/7 - Pack Current, positive for chg, neg for discharge
-        this.packA = process2Byte(rawData[6], rawData[7], 0.01);
-        //pos 8/9 - Pack Balance Capacity
-        this.packBalCap = process2Byte(rawData[8], rawData[9], 0.01);
-        //pos 10/11 - Pack Rate Capacity
-        this.packRateCap = process2Byte(rawData[10], rawData[11], 0.01);
-        //pos 12/13 - Pack number of cycles
-        this.packCycles = process2Byte(rawData[12], rawData[13]);
-        //TODO: pos 14/15 bms production date
-        
-        //pos 25 battery series number - do this before balance status so we can use it
-        this.packNumberOfCells = parseInt(process1Byte(rawData[25]));
-        //pos 16/17 balance status
-        this.balanceStatus = getBalanceStatus(rawData[16], rawData[17], this.packNumberOfCells);
-        //pos 18/19 balance status high
-        this.balanceStatusHigh = getBalanceStatus(rawData[18], rawData[19], this.packNumberOfCells);
-        //pos 20/21 protection status
-        this.protectionStatus = getProtectionStatus(rawData[20],rawData[21]);
-        //pos 22 s/w version
-        this.bmsSWVersion = rawData[22];
-        //pos 23 RSOC (remaining pack capacity, percent)
-        this.packSOC = process1Byte(rawData[23]);
-        //TODO: pos 24 FET status, bit0 chg, bit1, dischg (0 FET off, 1 FET on)
-
-        //pos 26 number of temp sensors (NTCs)
-        this.tempSensorCount = parseInt(process1Byte(rawData[26]));
-        //TODO: pos 27 / 28 / 29 Temp sensor (NTC) values
-        
-        return this;
-    }
-};
-
-const port = new SerialPort(args.serialport, {
-    baudRate: args.baudrate
-});
-
-module.exports = { 
-
-    getRegister3: async function() {
-        try {
-            const parser = port.pipe(new Delimiter({ delimiter: Buffer.alloc(1, STOP_BYTE) }));
-            const rawData = await requestData(port, readRegisterPayload(0x03), parser);
-            console.log('parsed' + rawData);
-            return register0x03.setData(rawData);
-        }
-        catch(e) {
-            logger.error(e);
-        }
-    }
-};
-
-
 async function requestData(serialPort, buff, parser){
     
     logger.trace('Writing to serial port...');
@@ -228,7 +155,7 @@ async function requestData(serialPort, buff, parser){
         if(err) {
             reject(err);
         }
-        logger.trace(buff, 'Data written: ');
+        logger.trace(buff.map(b => {return b.toString(16)}), 'Data written (HEX): ');
         parser.on('data', (data) => { 
             resolve(data)
         })
@@ -236,28 +163,24 @@ async function requestData(serialPort, buff, parser){
     });      
 }
 
-/*
+module.exports = { 
 
-const port = new SerialPort(args.serialport, {
-    baudRate: args.baudrate,
-    databits: 8,
-    parity: 'none'
-}, function (err) {
-    if (err) {
-      return console.log('Error: ', err.message)
+    getRegister: async function(reg) {
+        try {
+            const parser = port.pipe(new Delimiter({ delimiter: Buffer.alloc(1, STOP_BYTE) }));
+            const rawData = await requestData(port, readRegisterPayload(reg), parser);
+            if(validateChecksum(rawData)) {
+                switch(reg) {
+                    case 0x03:
+                        return register0x03.setData(rawData);
+                    case 0x04:
+                        return register0x03.setData(rawData);
+                  }
+            }
+            throw 'Recieved invalid payload from BMS!';
+        }
+        catch(e) {
+            logger.error(e);
+        }
     }
-  });
-
-  
-  port.write(readRegisterPayload(0x03), function(err, res) {
-    if (err) {
-      return console.log('Error on write: ', err.message)
-    }
-    console.log('message written')
-    console.log(res);
-  })
-
-  port.on('readable', function () {
-    console.log('Data:', port.read())
-  })
-*/
+};

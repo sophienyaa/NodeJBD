@@ -7,9 +7,7 @@ const logger = require('./logger');
 async function main() {
 
   logger.info('Starting NodeJBD...');
-
-  const res = await jbd.getRegister3();
-
+  const res = await jbd.getRegister(0x03);
   console.log(res);
 }
 
