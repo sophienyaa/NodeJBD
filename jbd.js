@@ -18,7 +18,7 @@ const register0x03 = {
         //pos 4/5 Pack Voltage 
         this.packV = parseFloat(process2Byte(rawData[4], rawData[5], 0.01));
         //pos 6/7 - Pack Current, positive for chg, neg for discharge
-        this.packA = parseFloat(process2Byte(rawData[6], rawData[7], 0.01));
+        this.packA = toS16(rawData[6], rawData[7]);//parseFloat(process2Byte(rawData[6], rawData[7], 0.01));
         //pos 8/9 - Pack Balance Capacity
         this.packBalCap = parseFloat(process2Byte(rawData[8], rawData[9], 0.01));
         //pos 10/11 - Pack Rate Capacity
@@ -98,6 +98,11 @@ function validateChecksum(result) {
     const checksum = calcChecksum(sumOfPayload, result[3]);
     return checksum[0] === result[result.length-3] && checksum[1] === result[result.length-2];
 }
+
+function toS16(byte1, byte2) {
+    Buffer.from([byte1, byte2]).readInt16BE();
+}
+
 
 function process2Byte(byte1, byte2, multiplier) {
     multiplier = multiplier != undefined || multiplier != null ? multiplier : 1;
