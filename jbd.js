@@ -182,7 +182,7 @@ function getNTCValues(bytes, numNTCs) {
     const ntcValues = bytes.slice(27,(numNTCs*2)+27);
     let count = 0;
     let result = {};
-    for(var i = 27; i < numNTCs*2; i++) { 
+    for(var i = 27; i < 27+(numNTCs*2); i++) { 
         if(i == 27 || i % 2 != 0) {
             const ntcName = `NTC${count}`;
             result[ntcName] = toU16(bytes[i], bytes[i+1]);
