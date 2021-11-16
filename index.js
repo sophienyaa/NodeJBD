@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 const cli = require('./cli');
-const mqtt = require('./mqtt');
 const jbd = require('./jbd');
 const logger = require('./logger');
 

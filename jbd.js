@@ -216,7 +216,7 @@ parser.on('data', function (data) {
                 const register3 = register0x03.setData(rawData);
                 if(args.mqttbroker) { 
                     logger.trace(register3, 'Register 3 Data: ');
-                    await mqtt.publish(register3, 'pack');
+                    mqtt.publish(register3, 'pack');
                 }
                 console.log(register3);
                 break;
@@ -224,7 +224,7 @@ parser.on('data', function (data) {
                 const register4 = register0x04.setData(rawData);
                 if(args.mqttbroker) { 
                     logger.trace(register4, 'Register 4 Data: ');
-                    await mqtt.publish(register4, 'cells');
+                    mqtt.publish(register4, 'cells');
                 }
                 console.log(register4);
                 break;
