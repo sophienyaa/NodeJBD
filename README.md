@@ -140,12 +140,11 @@ The utility will publish one topic, with two subtopics on your MQTT Broker. You 
 The first subtopic is `<topic>/pack`. This is published at the set interval and contains all the information about your pack. This contains the data from Register 0x03
 
 Example:
-
 ```
 {
 	"packV": "13.30",
 	"packA": "-0.43",
-	"packBalCap": "96.11",
+	"packBalCap": "96.04",
 	"packRateCap": "100.00",
 	"packCycles": 0,
 	"packNumberOfCells": 4,
@@ -184,10 +183,14 @@ Example:
 	},
 	"bmsSWVersion": 32,
 	"packSOC": 96,
+	"FETStatus": {
+		"charging": true,
+		"discharging": true
+	},
 	"tempSensorCount": 3,
 	"tempSensorValues": {
-		"NTC0": "12.95",
-		"NTC1": "14.05",
+		"NTC0": "12.85",
+		"NTC1": "13.95",
 		"NTC2": "13.55"
 	}
 }
