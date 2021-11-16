@@ -207,8 +207,8 @@ async function requestData(serialPort, buff, parser){
 }
 
 const parser = port.pipe(new Delimiter({ delimiter: Buffer.alloc(1, STOP_BYTE), includeDelimiter: true }));
-parser.on('data', function (data) {
-    logger.trace(data, 'Recieved Data from BMS (HEX): ');
+parser.on('data', function (rawData) {
+    logger.trace(rawData, 'Recieved Data from BMS (HEX): ');
     if(validateChecksum(rawData)) {
         logger.trace('Data from is valid!');
         switch(rawData[1]) {
