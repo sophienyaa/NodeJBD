@@ -234,9 +234,10 @@ parser.on('data', function (rawData) {
                 break;
           }
     }
-    logger.error('Recieved invalid data from BMS!');
+    else {
+        logger.error('Recieved invalid data from BMS!');
     }
-);
+});
 
 module.exports = { 
     getRegister: async function(reg) {
