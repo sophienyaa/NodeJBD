@@ -28,7 +28,7 @@ const register0x03 = {
         this.packCycles = toU16(rawData[12], rawData[13]);
         //pos 14/15 bms production date
             //TODO
-        //pos 25 battery series number - do this before balance status so we can use it to return the correct size array
+        //pos 25 pack cell count - do this before balance status so we can use it to return the correct size array
         this.packNumberOfCells = toU8(rawData[25]);
         //pos 16/17 balance status
         this.balanceStatus = getBalanceStatus(rawData[16], rawData[17], this.packNumberOfCells);
@@ -41,12 +41,11 @@ const register0x03 = {
         //pos 23 RSOC (remaining pack capacity, percent)
         this.packSOC = toU8(rawData[23]);
         //pos 24 FET status, bit0 chg, bit1, dischg (0 FET off, 1 FET on)
-            //TODO
+        this.FETStatus = getFETStatus(rawData[24]);
         //pos 26 number of temp sensors (NTCs)
         this.tempSensorCount = toU8(rawData[26]);
         //pos 27 / 28 / 29 Temp sensor (NTC) values
         this.tempSensorValues = getNTCValues(rawData, this.tempSensorCount);
-            //TODO
         return this;
     }
 };
@@ -129,6 +128,18 @@ function toU8(byte) {
 
 function process2BytesToBin(byte1, byte2) {
     return toU16(byte1, byte2).toString(2).padStart(16, '0');
+}
+
+function process1BytesToBin(byte) {
+    return toU8(byte).toString(2).padStart(8, '0');
+}
+
+function getFETStatus(byte) {
+    const fetBits = process1BytesToBin(byte).split("");
+    return {
+        "charging": Boolean(fetBits[0]),
+        "discharging": Boolean(fetBits[1])
+    }
 }
 
 function getBalanceStatus(byte1, byte2, numCells) {

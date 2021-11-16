@@ -1,12 +1,12 @@
 # NodeJBD
 
-Utility to retrieve data from JBD/Overkill Solar BMS units and publish it to MQTT, written in NodeJS, Based on [NodeJBD](https://github.com/mickwheelz/NodeJBD).
+Utility to retrieve data from JBD/Overkill Solar BMS units and publish it to MQTT, written in NodeJS, Based on [NodeRenogy](https://github.com/mickwheelz/NodeRenogy).
 
 Data can then be surfaced in Home Assistant, or anything else that can read from a MQTT bus.
 
-**NOTE: This is still very *alpha* and untested. It does however publish (most) data on registers 3 and 4 to MQTT**
+**NOTE:** This software provides *read-only* access to your BMS, intended for publshing information to Home Assistant, Grafana, or similar. You can not change any BMS parameters with this software.
 
-This readme will be updated when the software is more complete, use at your own risk.
+This software is licensed under the [MIT License](https://opensource.org/licenses/MIT).
 
 ## Thanks
 
@@ -143,10 +143,10 @@ Example:
 
 ```
 {
-	"packV": 13.29,
-	"packA": 1.84,
-	"packBalCap": 96.46,
-	"packRateCap": 100,
+	"packV": "13.30",
+	"packA": "-0.43",
+	"packBalCap": "96.11",
+	"packRateCap": "100.00",
 	"packCycles": 0,
 	"packNumberOfCells": 4,
 	"balanceStatus": [{
@@ -184,7 +184,12 @@ Example:
 	},
 	"bmsSWVersion": 32,
 	"packSOC": 96,
-	"tempSensorCount": 3
+	"tempSensorCount": 3,
+	"tempSensorValues": {
+		"NTC0": "12.95",
+		"NTC1": "14.05",
+		"NTC2": "13.55"
+	}
 }
 ```
 
