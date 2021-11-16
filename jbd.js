@@ -179,12 +179,10 @@ function getProtectionStatus(byte1, byte2) {
 
 function getNTCValues(bytes, numNTCs) {
 
-    console.log(numNTCs);
-    let result = {}
+    let result = []
     for(var i = 27; i < 27+numNTCs; i++) {
         const nameNTC = `NTC${i-27}`;
-        result[numNTCs] = bytes[i];
-        console.log(nameNTC);
+        result.push({[nameNTC]:bytes[i]});
     }
     return result;
 
