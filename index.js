@@ -14,18 +14,9 @@ async function main() {
 
     setInterval(
       async function() {
-          const register3 = await jbd.getRegister(0x03);
-          const register4 = await jbd.getRegister(0x04);
-
-          if(args.mqttbroker) {
-              await mqtt.publish(register3, 'pack');
-              await mqtt.publish(register4, 'cells');
-          }
-          else {
-              logger.trace('No MQTT broker specified!');
-              console.log(register3);
-              console.log(register4);
-          }
+        //send requests, response handled by eventlistener
+          await jbd.getRegister(0x03);
+          await jbd.getRegister(0x04);
       }, 
       args.pollinginterval * 1000
     );

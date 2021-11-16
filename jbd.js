@@ -2,6 +2,7 @@ const SerialPort = require('serialport');
 const Delimiter = require('@serialport/parser-delimiter')
 const logger = require('./logger');
 const cli = require('./cli');
+const mqtt = require('./mqtt');
 const args = cli.args;
 
 const START_BYTE = 0xDD;
@@ -193,37 +194,51 @@ function getNTCValues(bytes, numNTCs) {
 
 async function requestData(serialPort, buff, parser){
     
-    logger.trace('Writing to serial port...');
-    
+    logger.trace('Requesting data from BMS...');
     return new Promise(function(resolve, reject) { 
         serialPort.write(buff, function (err) {
         if(err) {
             reject(err);
         }
-        logger.trace(buff.map(b => {return b.toString(16)}), 'Data written (HEX): ');
-        parser.on('data', (data) => { 
-            resolve(data)
-        })
+        logger.trace(buff.map(b => {return b.toString(16)}), 'Request sent (HEX): ');
+       resolve();
       })
     });      
 }
+
+const parser = port.pipe(new Delimiter({ delimiter: Buffer.alloc(1, STOP_BYTE), includeDelimiter: true }));
+parser.on('data', function (data) {
+    logger.trace(data, 'Recieved Data from BMS (HEX): ');
+    if(validateChecksum(rawData)) {
+        logger.trace('Data from is valid!');
+        switch(rawData[1]) {
+            case 0x03:
+                const register3 = register0x03.setData(rawData);
+                if(args.mqttbroker) { 
+                    logger.trace(register3, 'Register 3 Data: ');
+                    await mqtt.publish(register3, 'pack');
+                }
+                console.log(register3);
+                break;
+            case 0x04:
+                const register4 = register0x04.setData(rawData);
+                if(args.mqttbroker) { 
+                    logger.trace(register4, 'Register 4 Data: ');
+                    await mqtt.publish(register4, 'cells');
+                }
+                console.log(register4);
+                break;
+          }
+    }
+    logger.error('Recieved invalid data from BMS!');
+    }
+);
 
 module.exports = { 
     getRegister: async function(reg) {
         try {
             logger.trace(`Getting data from Register ${reg}`);
-            const parser = port.pipe(new Delimiter({ delimiter: Buffer.alloc(1, STOP_BYTE), includeDelimiter: true }));
-            const rawData = await requestData(port, readRegisterPayload(reg), parser);
-            logger.trace(rawData.map(b => {return b.toString(16)}), 'Data read (HEX): ');
-            if(validateChecksum(rawData)) {
-                switch(reg) {
-                    case 0x03:
-                        return register0x03.setData(rawData);
-                    case 0x04:
-                        return register0x04.setData(rawData);
-                  }
-            }
-            throw 'Recieved invalid payload from BMS!';
+            await requestData(port, readRegisterPayload(reg), parser);
         }
         catch(e) {
             logger.error(e);
