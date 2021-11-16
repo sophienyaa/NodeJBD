@@ -44,6 +44,7 @@ const register0x03 = {
         //pos 26 number of temp sensors (NTCs)
         this.tempSensorCount = toU8(rawData[26]);
         //pos 27 / 28 / 29 Temp sensor (NTC) values
+        this.tempSensorValues = getNTCValues(rawData, this.tempSensorCount);
             //TODO
         return this;
     }
@@ -174,6 +175,17 @@ function getProtectionStatus(byte1, byte2) {
         //bit13-15 reserved/unused
     }
     return protectionStatus;
+}
+
+function getNTCValues(bytes, numNTCs) {
+
+    let result = {}
+    for(var i = 27; i < 27+numNTCs; i++) {
+        const nameNTC = `NTC${i-27}`;
+        result[numNTCs] = bytes[i];
+    }
+    return result;
+
 }
 
 async function requestData(serialPort, buff, parser){
