@@ -178,19 +178,17 @@ function getProtectionStatus(byte1, byte2) {
 }
 
 function getNTCValues(bytes, numNTCs) {
-
-    const ntcValues = bytes.slice(27,(numNTCs*2)+27);
     let count = 0;
     let result = {};
     for(var i = 27; i < 27+(numNTCs*2); i++) { 
         if(i == 27 || i % 2 != 0) {
             const ntcName = `NTC${count}`;
-            result[ntcName] = toU16(bytes[i], bytes[i+1]);
+            //temp is in 0.1K convert to celcius
+            result[ntcName] = (bytesToFloat(bytes[i], bytes[i+1], 0.1) - 273.15).toFixed(2);
             count++;
         }
     }
     return result;
-
 }
 
 async function requestData(serialPort, buff, parser){
