@@ -49,7 +49,7 @@ const argv = yargs
     .help()
     .alias('help', 'h')
     .epilogue('For more information, check out the project repository at https://github.com/mickwheelz/NodeJBD')
-    .env('`NODEJBD`')
+    .env('NODEJBD')
     .demandOption('serialport', 'You must specify a serial port')
     .wrap(yargs.terminalWidth())
     .argv;
