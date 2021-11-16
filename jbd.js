@@ -179,13 +179,16 @@ function getProtectionStatus(byte1, byte2) {
 
 function getNTCValues(bytes, numNTCs) {
 
-    console.log(bytes);
-    let result = []
-    for(var i = 27; i < 27+numNTCs; i++) {
-        const nameNTC = `NTC${i-27}`;
-        result.push({[nameNTC]:bytes[i]});
-    }
-    return result;
+    const ntcValues = bytes.slice(27,(numNTCs*2)+27);
+    let count = 0;
+    for(var i = 27; i < numNTCs*2; i++) { 
+        if(i == 27 || i % 2 != 0) {
+            const ntcName = `NTC${count}`;
+            this[ntcName] = toU16(bytes[i], bytes[i+1]);
+            count++;
+        }
+    } 
+    return this;
 
 }
 
