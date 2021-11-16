@@ -218,7 +218,9 @@ parser.on('data', function (rawData) {
                     logger.trace(register3, 'Register 3 Data: ');
                     mqtt.publish(register3, 'pack');
                 }
-                console.log(register3);
+                else {
+                    console.log(register3);
+                }
                 break;
             case 0x04:
                 const register4 = register0x04.setData(rawData);
@@ -226,7 +228,9 @@ parser.on('data', function (rawData) {
                     logger.trace(register4, 'Register 4 Data: ');
                     mqtt.publish(register4, 'cells');
                 }
-                console.log(register4);
+                else {
+                    console.log(register4);
+                }
                 break;
           }
     }
