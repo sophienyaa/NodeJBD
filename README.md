@@ -140,7 +140,7 @@ The utility will publish one topic, with two subtopics on your MQTT Broker. You 
 The first subtopic is `<topic>/pack`. This is published at the set interval and contains all the information about your pack. This contains the data from Register 0x03
 
 Example:
-```
+```json
 {
 	"packV": "13.30",
 	"packA": "-0.43",
@@ -199,7 +199,7 @@ Example:
 The second is `<topic>/cells` This is published at the set interval and contains the voltages of your individual cells. This contains the data from register 0x04
 
 Example:
-```
+```json
 {
     "cell0mV":3324,
     "cell0V":3.32,
@@ -221,9 +221,9 @@ Essentially you just need to extract the values from the JSON payload published 
 
 See below for some examples:
 
-```
+```yaml
 sensor:
- |platform: mqtt
+- platform: mqtt
     name: "Current Battery State of Charge"
     state_topic: "NodeJBD/pack"
     value_template: "{{ value_json['packSOC'] }}"
