@@ -1,6 +1,6 @@
 # NodeJBD
 
-Utility to retrieve data from JBD/Overkill Solar BMS units and publish it to MQTT, written in NodeJS, Based on [NodeRenogy](https://github.com/mickwheelz/NodeRenogy).
+Utility to retrieve data from JBD/Overkill Solar BMS units and publish it to MQTT, written in NodeJS, Based on [NodeRenogy](https://github.com/sophienyaa/NodeRenogy).
 
 Data can then be surfaced in Home Assistant, or anything else that can read from a MQTT bus.
 
@@ -61,7 +61,7 @@ Once you've got NodeJS installed, then follow the below instructions.
 
 1. Clone this repository (or download it) by running;
 
-`git clone https://github.com/mickwheelz/NodeJBD.git`
+`git clone https://github.com/sophienyaa/NodeJBD.git`
 
 2. Change to the `NodeJBD` directory and install the dependencies by running the below commands
 
