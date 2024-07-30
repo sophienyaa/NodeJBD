@@ -61,7 +61,7 @@ Once you've got NodeJS installed, then follow the below instructions.
 
 1. Clone this repository (or download it) by running;
 
-`git clone https://github.com/mickwheelz/NodeJBD.git`
+`git clone https://github.com/sophienyaa/NodeJBD.git`
 
 2. Change to the `NodeJBD` directory and install the dependencies by running the below commands
 
