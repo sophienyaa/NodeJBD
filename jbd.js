@@ -31,9 +31,9 @@ const register0x03 = {
         //pos 25 pack cell count - do this before balance status so we can use it to return the correct size array
         this.packNumberOfCells = toU8(rawData[25]);
         //pos 16/17 balance status
-        this.balanceStatus = getBalanceStatus(rawData[16], rawData[17], this.packNumberOfCells);
+        this.balanceStatus = getBalanceStatus(rawData[16], rawData[17], this.packNumberOfCells, 0);
         //pos 18/19 balance status high
-        this.balanceStatusHigh = getBalanceStatus(rawData[18], rawData[19], this.packNumberOfCells);
+        this.balanceStatusHigh = getBalanceStatus(rawData[18], rawData[19], this.packNumberOfCells, 16);
         //pos 20/21 protection status
         this.protectionStatus = getProtectionStatus(rawData[20],rawData[21]);
         //pos 22 s/w version
@@ -142,12 +142,13 @@ function getFETStatus(byte) {
     }
 }
 
-function getBalanceStatus(byte1, byte2, numCells) {
-    const balanceBits = process2BytesToBin(byte1, byte2).split("").slice(0, numCells);
-    return balanceBits.map((bit, idx) =>{
-        const keyName = `cell${idx}`;
-        return {[keyName]: Boolean(parseInt(bit))};
-    });
+function getBalanceStatus(byte1, byte2, numCells, startCell = 0) {
+  if (startCell >= numCells) return [];
+  const bits = process2BytesToBin(byte1, byte2).split("").reverse();
+  const cellsToRead = Math.min(16, numCells - startCell);
+  return bits.slice(0, cellsToRead).map((bit, idx) => ({
+    [`cell${startCell + idx}`]: bit === "1",
+  }));
 }
 
 function getProtectionStatus(byte1, byte2) {
